@@ -1,2 +1,5 @@
 solution*
 post-processed.zip
+lightning_logs/
+mlruns/
+__pycache__/
