@@ -4,17 +4,39 @@ import torch.nn as nn
 import timm
 
 class Encoder(torch.nn.Module):
-    def __init__(self, model_name, out_dim):
-        super().__init__()
-        self.model = timm.create_model(model_name, pretrained=True, num_classes=out_dim)
+    def __init__(self, base_model, out_dim, freeze_inception=True):
+        super().__init()
+
+        # Load the TIMM base model
+        self.model = timm.create_model(base_model, pretrained=True, num_classes=1000)
+
+        # Freeze the base model
+        if freeze_inception:
+            for param in self.model.parameters():
+                param.requires_grad = False
+
+        # Add a custom trainable CNN head to reduce features to out_dim
+        self.cnn_head = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),  # Global Average Pooling
+            nn.Flatten(),
+            nn.Linear(self.model.num_features, out_dim)
+        )
+        for param in self.cnn_head.parameters():
+            param.requires_grad = True
 
     def forward(self, x):
-        return self.model(x)
+        # Forward pass through the TIMM model
+        features = self.model(x)
+
+        # Forward pass through the custom CNN head
+        embedding = self.cnn_head(features)
+
+        return embedding
 
 class FaceRecognitionModel(pl.LightningModule):
     def __init__(self, lr=1e-3):
         super().__init__()
-        self.encoder_name = 'resnet34'
+        self.encoder_name = 'xception65.tf_in1k'
         self.encoder = Encoder(self.encoder_name, 128)
         self.criterion = nn.TripletMarginLoss(margin=1.0, p=2)
         self.lr = lr
