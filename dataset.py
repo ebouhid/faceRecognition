@@ -4,6 +4,9 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 
+# TODO: fix errors when not using albumentations
+# RuntimeError: Given groups=1, weight of size [32, 3, 3, 3], expected input[8, 112, 112, 3] to have 3 channels, but got 112 channels instead
+
 class TripletFaceDataset(Dataset):
     def __init__(self, root_dir, transforms=None):
         self.root_dir = root_dir # post-processed folder
