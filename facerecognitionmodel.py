@@ -4,40 +4,44 @@ import torch.nn as nn
 import timm
 
 class Encoder(torch.nn.Module):
-    def __init__(self, base_model, out_dim, freeze_inception=True):
-        super().__init()
+    def __init__(self, base_model, out_dim, freeze_base=True):
+        super().__init__()
 
         # Load the TIMM base model
         self.model = timm.create_model(base_model, pretrained=True, num_classes=1000)
 
         # Freeze the base model
-        if freeze_inception:
+        if freeze_base:
             for param in self.model.parameters():
                 param.requires_grad = False
 
-        # Add a custom trainable CNN head to reduce features to out_dim
-        self.cnn_head = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),  # Global Average Pooling
-            nn.Flatten(),
-            nn.Linear(self.model.num_features, out_dim)
+        # Add a custom trainable NN head to reduce features to out_dim
+        self.nn_head = nn.Sequential(
+            nn.Linear(1000, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, out_dim)
         )
-        for param in self.cnn_head.parameters():
+        for param in self.nn_head.parameters():
             param.requires_grad = True
 
     def forward(self, x):
         # Forward pass through the TIMM model
         features = self.model(x)
 
-        # Forward pass through the custom CNN head
-        embedding = self.cnn_head(features)
+        # Forward pass through the custom NN head
+        embedding = self.nn_head(features)
 
         return embedding
 
 class FaceRecognitionModel(pl.LightningModule):
-    def __init__(self, lr=1e-3):
+    def __init__(self, lr=1e-3, freeze_base=True):
         super().__init__()
         self.encoder_name = 'xception65.tf_in1k'
-        self.encoder = Encoder(self.encoder_name, 128)
+        self.encoder = Encoder(self.encoder_name, 128, freeze_base=freeze_base)
         self.criterion = nn.TripletMarginLoss(margin=1.0, p=2)
         self.lr = lr
     
