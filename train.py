@@ -8,13 +8,13 @@ from albumentations.pytorch import ToTensorV2
 import mlflow.pytorch
 
 # Set hyperparameters
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 NUM_WORKERS = 8
 NUM_EPOCHS = 100
 FACE_DIR = 'data/'
 MIN_DELTA = 1e-4
-PATIENCE = 5
-LEARNING_RATE = 1e-2
+PATIENCE = 10
+LEARNING_RATE = 5e-4
 
 # Set random seed
 seed = 42
@@ -44,7 +44,7 @@ mlflow.pytorch.autolog()
 mlflow.log_params({'batch_size': BATCH_SIZE})
 
 # Create model
-model = FaceRecognitionModel(lr=LEARNING_RATE)
+model = FaceRecognitionModel(lr=LEARNING_RATE, freeze_base=False)
 
 # Log model name as a tag
 mlflow.set_tag('encoder_name', model.get_encoder_name())
