@@ -1,0 +1,10 @@
+solution*
+post-processed.zip
+lightning_logs/
+mlruns/
+__pycache__/
+*.out
+*.zip
+digiface_1m/
+lfw/
+lfw_cropped/

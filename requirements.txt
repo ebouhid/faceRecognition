@@ -1,0 +1,5 @@
+opencv-python
+albumentations
+timm
+lightning
+pytorch-metric-learning
